@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健康自测评分表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        // 自动计算总分、各板块得分、结论及建议
+        function calculateScore() {
+            // 检查是否完成所有20题
+            let isAllAnswered = true;
+            for (let i = 1; i <= 20; i++) {
+                if (!document.querySelector(`input[name="q${i}"]:checked`)) {
+                    isAllAnswered = false;
+                    break;
+                }
+            }
+
+            // 各板块得分计算
+            let part1 = 0; // 身体状态（1-6题）
+            for (let i = 1; i <= 6; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                part1 += selected ? parseInt(selected.value) : 0;
+            }
+
+            let part2 = 0; // 生活方式（7-12题）
+            for (let i = 7; i <= 12; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                part2 += selected ? parseInt(selected.value) : 0;
+            }
+
+            let part3 = 0; // 心理与情绪（13-17题）
+            for (let i = 13; i <= 17; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                part3 += selected ? parseInt(selected.value) : 0;
+            }
+
+            let part4 = 0; // 社交与满意度（18-20题）
+            for (let i = 18; i <= 20; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                part4 += selected ? parseInt(selected.value) : 0;
+            }
+
+            // 总分计算
+            const total = part1 + part2 + part3 + part4;
+
+            // 健康结论与个性化建议
+            let level, conclusion, suggestion, levelColor;
+            if (!isAllAnswered) {
+                level = "【请完成所有题目】";
+                conclusion = "您尚未完成全部20道题目，暂时无法生成完整评估结果。";
+                suggestion = "请根据最近一个月的实际情况，完成所有题目的选择，提交后将自动为您计算总分并提供专业的健康结论和改善建议。";
+                levelColor = "text-gray-500";
+            } else {
+                if (total >= 86) {
+                    level = "【健康典范】";
+                    conclusion = "恭喜！您的健康状况处于优秀水平，身体、心理、生活方式和社交状态均保持良好平衡。";
+                    suggestion = "1. 继续保持当前的健康习惯，如规律作息、均衡饮食和适度运动；2. 可尝试挑战更高阶的健康目标（如增加力量训练、学习新的放松技巧）；3. 定期进行常规体检，巩固健康基础。";
+                    levelColor = "text-emerald-600";
+                } else if (total >= 71) {
+                    level = "【良好，有提升空间】";
+                    conclusion = "您的整体健康状况良好，但部分板块存在可优化空间，通过针对性调整可进一步提升健康水平。";
+                    suggestion = `1. 重点关注得分较低的板块：${getLowScoreParts(part1, part2, part3, part4)}；2. 生活方式上可增加运动频率、减少高油高糖食物摄入；3. 心理层面可尝试每天预留10分钟放松时间（如冥想、深呼吸）；4. 定期复盘健康状态，逐步优化不良习惯。`;
+                    levelColor = "text-blue-600";
+                } else if (total >= 51) {
+                    level = "【需要警惕】";
+                    conclusion = "您的健康状况已出现多个风险点，若不及时调整，可能影响长期健康质量，需引起重视。";
+                    suggestion = `1. 紧急改善${getLowScoreParts(part1, part2, part3, part4)}：身体状态方面保证充足睡眠（7-8小时）、规律三餐；生活方式上每周至少运动150分钟，戒烟限酒；2. 心理压力管理：可寻求家人朋友倾诉或专业心理咨询；3. 建议3个月内进行一次全面体检，排查潜在健康问题；4. 制定阶段性健康目标（如每月改善1-2个不良习惯）。`;
+                    levelColor = "text-amber-600";
+                } else {
+                    level = "【亟需行动】";
+                    conclusion = "您的健康状况面临较大挑战，多个维度存在明显失衡，需立即采取系统性调整措施。";
+                    suggestion = `1. 优先解决${getLowScoreParts(part1, part2, part3, part4)}：立即就医进行全面体检，排除器质性疾病；2. 生活方式重构：严格规律作息，避免熬夜，遵循地中海饮食模式（多蔬果、全谷物、优质蛋白）；3. 心理支持：必要时寻求专业心理干预，缓解焦虑或抑郁情绪；4. 社交重建：主动参与社交活动，建立支持性人际关系；5. 建议每月进行一次健康自测，追踪改善进度。`;
+                    levelColor = "text-rose-600";
+                }
+            }
+
+            // 更新页面显示
+            document.getElementById('part1-total').textContent = part1;
+            document.getElementById('part2-total').textContent = part2;
+            document.getElementById('part3-total').textContent = part3;
+            document.getElementById('part4-total').textContent = part4;
+            document.getElementById('summary-part1').textContent = part1;
+            document.getElementById('summary-part2').textContent = part2;
+            document.getElementById('summary-part3').textContent = part3;
+            document.getElementById('summary-part4').textContent = part4;
+            document.getElementById('total-score').textContent = total;
+            document.getElementById('health-level').textContent = level;
+            document.getElementById('health-level').className = `text-lg font-bold mt-2 ${levelColor}`;
+            document.getElementById('health-conclusion').textContent = conclusion;
+            document.getElementById('health-suggestion').textContent = suggestion;
+        }
+
+        // 辅助函数：获取得分较低的板块（≤60%满分）
+        function getLowScoreParts(part1, part2, part3, part4) {
+            const parts = [
+                { name: "身体状态", score: part1, max: 30 },
+                { name: "生活方式", score: part2, max: 30 },
+                { name: "心理与情绪", score: part3, max: 25 },
+                { name: "社交与满意度", score: part4, max: 15 }
+            ];
+            const lowParts = parts.filter(p => p.score / p.max <= 0.6).map(p => p.name);
+            return lowParts.length > 0 ? lowParts.join("、") : "无明显短板，可全面小幅优化";
+        }
+
+        // 页面加载初始化
+        window.onload = function() {
+            // 给所有单选框添加选择事件监听
+            const allRadios = document.querySelectorAll('input[type="radio"]');
+            allRadios.forEach(radio => {
+                radio.addEventListener('change', calculateScore);
+            });
+            // 初始执行一次计算（显示初始提示）
+            calculateScore();
+        };
+    </script>
+    <style>
+        .option-hover:hover {
+            transform: translateX(4px);
+            transition: transform 0.2s ease;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .section-header {
+            background: linear-gradient(135deg, var(--tw-gradient-stops));
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        input[type="radio"] {
+            accent-color: #3b82f6;
+            width: 14px;
+            height: 14px;
+        }
+        body {
+            font-size: 14px;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        .suggestion-list {
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-700">
+    <div class="container mx-auto px-3 py-5 max-w-6xl">
+        <!-- 标题区域 -->
+        <header class="text-center mb-6">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center">
+                <i class="fa fa-heartbeat text-red-500 mr-2"></i>健康自测评分表（总分100分）
+            </h1>
+            <div class="bg-white p-3 rounded-xl card-shadow border border-gray-100 text-left max-w-3xl mx-auto">
+                <h3 class="font-semibold text-gray-700 mb-1 flex items-center text-sm md:text-base">
+                    <i class="fa fa-info-circle text-blue-500 mr-1.5"></i>使用说明
+                </h3>
+                <ul class="list-disc pl-5 text-gray-600 space-y-0.5 text-xs md:text-sm">
+                    <li>共20道题目，分为4个健康维度，完成所有题目后自动计算总分。</li>
+                    <li>每题仅选一项，根据最近一个月的实际情况如实选择。</li>
+                    <li>系统将根据总分和各板块得分，生成个性化健康结论及改善建议。</li>
+                </ul>
+            </div>
+        </header>
+
+        <!-- 第一部分：身体状态 -->
+        <section class="mb-6 bg-white rounded-xl card-shadow border border-gray-100 overflow-hidden">
+            <div class="section-header from-blue-50 to-blue-100 px-5 py-2 border-b border-blue-100">
+                <h2 class="text-base font-bold text-blue-800 flex items-center">
+                    <i class="fa fa-bodystyle mr-1.5"></i>第一部分：身体状态（满分30分）
+                </h2>
+            </div>
+            <div class="p-4 md:p-5">
+                <div class="space-y-4">
+                    <!-- 题目1 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-blue-100 text-blue-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">1</span>
+                            <h3 class="font-medium text-gray-800 text-sm">睡眠质量</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q1" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>入睡快，睡眠深，晨起精神好 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q1" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>偶尔失眠，多梦易醒，但总体尚可 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q1" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>经常失眠，难以入睡，晨起疲惫 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目2 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-blue-100 text-blue-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">2</span>
+                            <h3 class="font-medium text-gray-800 text-sm">精力水平</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q2" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>白天精力充沛，不易疲劳 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q2" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>午后略有困倦，但可恢复 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q2" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>持续感到疲劳，乏力，提不起精神 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目3 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-blue-100 text-blue-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">3</span>
+                            <h3 class="font-medium text-gray-800 text-sm">食欲与消化</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q3" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>食欲良好，消化正常，无不适 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q3" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>偶尔食欲不振或消化不良 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q3" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>经常胃胀、便秘、腹泻或食欲差 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目4 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-blue-100 text-blue-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">4</span>
+                            <h3 class="font-medium text-gray-800 text-sm">体重管理</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q4" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>BMI在18.5-23.9之间，且稳定 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q4" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>BMI轻微超重或偏轻，近期有变化 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q4" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>BMI明显超重或偏轻，且难以控制 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目5 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-blue-100 text-blue-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">5</span>
+                            <h3 class="font-medium text-gray-800 text-sm">慢性疼痛</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q5" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>无任何慢性疼痛（如头痛、颈肩腰背痛） (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q5" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>偶尔有轻微疼痛，不影响生活 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q5" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>频繁或持续疼痛，影响日常活动 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目6 -->
+                    <div class="pb-1">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-blue-100 text-blue-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">6</span>
+                            <h3 class="font-medium text-gray-800 text-sm">体检指标</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q6" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>近一年体检，主要指标均正常 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q6" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>部分指标处于临界值，需关注 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q6" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>有明确诊断的慢性病或指标异常 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 第一部分小计 -->
+                    <div class="mt-3 pt-3 border-t border-blue-50 text-right">
+                        <span class="text-sm font-semibold text-gray-700">本部分小计：</span>
+                        <span id="part1-total" class="text-base font-bold text-blue-600 mx-1.5">0</span>
+                        <span class="text-sm text-gray-500">/ 30分</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第二部分：生活方式 -->
+        <section class="mb-6 bg-white rounded-xl card-shadow border border-gray-100 overflow-hidden">
+            <div class="section-header from-emerald-50 to-emerald-100 px-5 py-2 border-b border-emerald-100">
+                <h2 class="text-base font-bold text-emerald-800 flex items-center">
+                    <i class="fa fa-leaf mr-1.5"></i>第二部分：生活方式（满分30分）
+                </h2>
+            </div>
+            <div class="p-4 md:p-5">
+                <div class="space-y-4">
+                    <!-- 题目7 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">7</span>
+                            <h3 class="font-medium text-gray-800 text-sm">规律运动</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q7" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>每周中等强度运动≥150分钟 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q7" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>每周运动1-2次，但强度或时长不足 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q7" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>几乎不运动，以静坐为主 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目8 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">8</span>
+                            <h3 class="font-medium text-gray-800 text-sm">均衡饮食</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q8" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>饮食多样，蔬果、蛋白质、主食搭配合理 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q8" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>饮食有时不规律，偶尔外卖/油炸食品 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q8" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>经常高油、高盐、高糖饮食，蔬果摄入少 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目9 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">9</span>
+                            <h3 class="font-medium text-gray-800 text-sm">饮水习惯</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q9" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>每日饮水1.5-2升（约8杯水） (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q9" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>感觉口渴才喝水，每日不足1升 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q9" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>常以饮料代水，或极少喝水 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目10 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">10</span>
+                            <h3 class="font-medium text-gray-800 text-sm">烟酒习惯</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q10" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>不吸烟、不饮酒 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q10" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>偶尔社交性饮酒，完全不吸烟 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q10" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>经常饮酒或目前吸烟 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目11 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">11</span>
+                            <h3 class="font-medium text-gray-800 text-sm">作息规律</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q11" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>工作日与周末作息时间基本一致 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q11" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>周末会晚睡晚起，但偏差在2小时内 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q11" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>作息极不规律，经常熬夜 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目12 -->
+                    <div class="pb-1">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">12</span>
+                            <h3 class="font-medium text-gray-800 text-sm">屏幕时间</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q12" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>除工作学习外，每日娱乐性屏幕时间<2小时 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q12" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>每日娱乐性屏幕时间2-4小时 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q12" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>每日娱乐性屏幕时间>4小时 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 第二部分小计 -->
+                    <div class="mt-3 pt-3 border-t border-emerald-50 text-right">
+                        <span class="text-sm font-semibold text-gray-700">本部分小计：</span>
+                        <span id="part2-total" class="text-base font-bold text-emerald-600 mx-1.5">0</span>
+                        <span class="text-sm text-gray-500">/ 30分</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第三部分：心理与情绪 -->
+        <section class="mb-6 bg-white rounded-xl card-shadow border border-gray-100 overflow-hidden">
+            <div class="section-header from-purple-50 to-purple-100 px-5 py-2 border-b border-purple-100">
+                <h2 class="text-base font-bold text-purple-800 flex items-center">
+                    <i class="fa fa-heart mr-1.5"></i>第三部分：心理与情绪（满分25分）
+                </h2>
+            </div>
+            <div class="p-4 md:p-5">
+                <div class="space-y-4">
+                    <!-- 题目13 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-purple-100 text-purple-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">13</span>
+                            <h3 class="font-medium text-gray-800 text-sm">情绪稳定性</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q13" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>情绪平稳，积极乐观 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q13" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>偶尔情绪低落或烦躁，但能自我调节 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q13" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>经常感到焦虑、抑郁、易怒，难以控制 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目14 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-purple-100 text-purple-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">14</span>
+                            <h3 class="font-medium text-gray-800 text-sm">压力管理</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q14" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>能很好地应对压力，有有效的放松方式 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q14" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>感到有压力，但大部分时间可以应对 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q14" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>感到压力巨大，难以承受，常感紧张 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目15 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-purple-100 text-purple-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">15</span>
+                            <h3 class="font-medium text-gray-800 text-sm">记忆力与专注力</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q15" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>思维清晰，记忆力好，专注力强 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q15" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>偶尔忘事，注意力有时不集中 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q15" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>经常健忘，思维迟钝，很难专注 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目16 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-purple-100 text-purple-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">16</span>
+                            <h3 class="font-medium text-gray-800 text-sm">自我价值感</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q16" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>对自己满意，对未来充满希望 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q16" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>对自己有部分不满，但能接受 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q16" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>对自己评价很低，感到无望 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目17 -->
+                    <div class="pb-1">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-purple-100 text-purple-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">17</span>
+                            <h3 class="font-medium text-gray-800 text-sm">休息与放松</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q17" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>有固定的兴趣爱好和放松时间，感到充实 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q17" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>偶尔能放松，但总觉得时间不够 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q17" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>几乎没有时间放松，感觉一直被生活推着走 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 第三部分小计 -->
+                    <div class="mt-3 pt-3 border-t border-purple-50 text-right">
+                        <span class="text-sm font-semibold text-gray-700">本部分小计：</span>
+                        <span id="part3-total" class="text-base font-bold text-purple-600 mx-1.5">0</span>
+                        <span class="text-sm text-gray-500">/ 25分</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第四部分：社交与生活满意度 -->
+        <section class="mb-6 bg-white rounded-xl card-shadow border border-gray-100 overflow-hidden">
+            <div class="section-header from-amber-50 to-amber-100 px-5 py-2 border-b border-amber-100">
+                <h2 class="text-base font-bold text-amber-800 flex items-center">
+                    <i class="fa fa-users mr-1.5"></i>第四部分：社交与生活满意度（满分15分）
+                </h2>
+            </div>
+            <div class="p-4 md:p-5">
+                <div class="space-y-4">
+                    <!-- 题目18 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-amber-100 text-amber-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">18</span>
+                            <h3 class="font-medium text-gray-800 text-sm">人际关系</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q18" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>有可以信赖和倾诉的家人/朋友，关系融洽 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q18" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>人际关系尚可，但缺乏深度交流 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q18" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>常感孤独，与人交往困难或缺乏社交 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目19 -->
+                    <div class="border-b border-gray-50 pb-3">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-amber-100 text-amber-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">19</span>
+                            <h3 class="font-medium text-gray-800 text-sm">工作/学习满意度</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q19" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>对当前工作/学习充满热情，有成就感 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q19" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>感觉一般，仅为谋生或任务，时有倦怠 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q19" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>非常不满意，感到痛苦和消耗 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 题目20 -->
+                    <div class="pb-1">
+                        <div class="flex items-start mb-2">
+                            <span class="bg-amber-100 text-amber-800 font-semibold w-5 h-5 rounded-full flex items-center justify-center mr-2 mt-0.5 text-xs">20</span>
+                            <h3 class="font-medium text-gray-800 text-sm">生活整体满意度</h3>
+                        </div>
+                        <div class="pl-7 space-y-1.5">
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q20" value="5" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-emerald-600">A. </span>对目前生活总体感到满意和幸福 (5分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q20" value="3" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-blue-600">B. </span>对某些方面满意，但觉得有改善空间 (3分)</span>
+                            </label>
+                            <label class="flex items-center option-hover cursor-pointer text-xs md:text-sm">
+                                <input type="radio" name="q20" value="1" class="mr-1.5">
+                                <span class="text-gray-700"><span class="font-semibold text-amber-600">C. </span>对生活大部分方面感到不满意 (1分)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 第四部分小计 -->
+                    <div class="mt-3 pt-3 border-t border-amber-50 text-right">
+                        <span class="text-sm font-semibold text-gray-700">本部分小计：</span>
+                        <span id="part4-total" class="text-base font-bold text-amber-600 mx-1.5">0</span>
+                        <span class="text-sm text-gray-500">/ 15分</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 得分汇总（最底端） -->
+        <section class="mb-6 bg-white rounded-xl card-shadow border border-gray-100 overflow-hidden">
+            <div class="section-header from-indigo-50 to-indigo-100 px-5 py-2 border-b border-indigo-100">
+                <h2 class="text-base font-bold text-indigo-800 flex items-center">
+                    <i class="fa fa-calculator mr-1.5"></i>得分汇总
+                </h2>
+            </div>
+            <div class="p-4 md:p-5">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                    <div class="bg-blue-50 rounded-lg p-2 text-center">
+                        <span class="text-xs text-blue-800 block mb-0.5">身体状态</span>
+                        <span id="summary-part1" class="text-base font-bold text-blue-600">0</span>
+                        <span class="text-xs text-gray-500">/ 30分</span>
+                    </div>
+                    <div class="bg-emerald-50 rounded-lg p-2 text-center">
+                        <span class="text-xs text-emerald-800 block mb-0.5">生活方式</span>
+                        <span id="summary-part2" class="text-base font-bold text-emerald-600">0</span>
+                        <span class="text-xs text-gray-500">/ 30分</span>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-2 text-center">
+                        <span class="text-xs text-purple-800 block mb-0.5">心理与情绪</span>
+                        <span id="summary-part3" class="text-base font-bold text-purple-600">0</span>
+                        <span class="text-xs text-gray-500">/ 25分</span>
+                    </div>
+                    <div class="bg-amber-50 rounded-lg p-2 text-center">
+                        <span class="text-xs text-amber-800 block mb-0.5">社交与满意度</span>
+                        <span id="summary-part4" class="text-base font-bold text-amber-600">0</span>
+                        <span class="text-xs text-gray-500">/ 15分</span>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-100 text-center">
+                    <span class="text-sm font-semibold text-gray-700">最终总分：</span>
+                    <span id="total-score" class="text-2xl font-bold text-red-600 mx-1.5">0</span>
+                    <span class="text-sm text-gray-500">/ 100分</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 总分计算与结果分析（得分汇总下方） -->
+        <section class="mb-6 bg-white rounded-xl card-shadow border border-gray-100 overflow-hidden">
+            <div class="section-header from-red-50 to-red-100 px-5 py-2 border-b border-red-100">
+                <h2 class="text-base font-bold text-red-800 flex items-center">
+                    <i class="fa fa-bar-chart mr-1.5"></i>健康评估结果与建议
+                </h2>
+            </div>
+            <div class="p-4 md:p-5">
+                <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                    <div id="health-level" class="text-lg font-bold mt-2 text-gray-500 text-center">【请完成所有题目】</div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <h3 class="font-semibold text-gray-800 text-sm mb-1 flex items-center">
+                            <i class="fa fa-check-circle text-blue-500 mr-1.5"></i>健康结论
+                        </h3>
+                        <p id="health-conclusion" class="text-gray-700 text-sm pl-6">您尚未完成全部20道题目，暂时无法生成完整评估结果。</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800 text-sm mb-1 flex items-center">
+                            <i class="fa fa-lightbulb-o text-amber-500 mr-1.5"></i>个性化改善建议
+                        </h3>
+                        <p id="health-suggestion" class="text-gray-700 text-sm pl-6 suggestion-list">您尚未完成全部20道题目，暂时无法生成完整评估结果。请根据最近一个月的实际情况，完成所有题目的选择，提交后将自动为您计算总分并提供专业的健康结论和改善建议。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
+
